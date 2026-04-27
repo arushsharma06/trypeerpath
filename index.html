@@ -195,11 +195,11 @@
     .hero-stats {
       display: flex;
       justify-content: center;
-      gap: 40px;
+      gap: 0;
       margin-top: 56px;
       flex-wrap: wrap;
     }
-    .stat { text-align: center; }
+    .stat { text-align: center; flex: 1; max-width: 160px; }
     .stat-num {
       display: block;
       font-size: 1.8rem;
@@ -598,7 +598,6 @@
       color: #fff;
       flex-shrink: 0;
     }
-    .pay-logo.zelle  { background: #6d1ed4; }
     .pay-logo.venmo  { background: #008dff; }
     .pay-logo.paypal { background: #003087; }
     .pay-detail {
@@ -625,23 +624,8 @@
       transition: opacity 0.2s, transform 0.15s;
     }
     .pay-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-    .pay-btn.zelle  { background: #6d1ed4; color: #fff; }
     .pay-btn.venmo  { background: #008dff; color: #fff; }
     .pay-btn.paypal { background: #ffc439; color: #003087; }
-    .zelle-copy {
-      display: flex; gap: 8px; align-items: center;
-    }
-    .zelle-copy input {
-      flex: 1;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 8px 10px;
-      font-size: 0.87rem;
-      font-weight: 600;
-      color: var(--text);
-      background: var(--surface);
-      outline: none;
-    }
     .copy-btn {
       padding: 8px 14px;
       border-radius: 7px;
@@ -740,7 +724,7 @@
     <div class="hero-inner">
       <div class="hero-badge">College Consulting</div>
       <h1>Real guidance from someone<br>who <em>just went through it</em></h1>
-      <p>No corporate playbooks. No recycled advice. Just honest help from a current college student who remembers what this process actually feels like.</p>
+      <p>No recycled advice. Just the help I wish I had when I was applying.</p>
       <div>
         <a href="https://calendly.com/arushsharma-berkeley/free-20-min-consultation" class="btn">Book a Free Call</a>
         <a href="#services" class="btn btn-ghost">See Services</a>
@@ -776,7 +760,7 @@
           <div class="section-label">About Me</div>
           <h2 class="section-title">Hey, I'm Arush. A college student, not a consultant</h2>
           <p>I went through the college application process not that long ago. I know what it's like to stare at a blank Common App essay at midnight, to not know which extracurriculars actually matter, or to feel completely lost trying to navigate applications. That experience is fresh, and I think that's actually useful.</p>
-          <p>I study Economics and Data Science and I've done things I'm proud of: research, a stint at <a href="#" style="color:var(--blue);font-weight:600;">Recidiviz</a> (a criminal justice reform startup), and an upcoming role at Wells Fargo. But none of that is why you should work with me. You should work with me because I remember this process clearly and I want to help you navigate it without the stress I had.</p>
+          <p>I study Economics and Data Science and I've done things I'm proud of: research, a stint at Recidiviz (a criminal justice reform startup), and an upcoming role at Wells Fargo. But none of that is why you should work with me. You should work with me because I remember this process clearly and I want to help you navigate it without the stress I had.</p>
           <p>I'm not going to hand you a template or give you generic advice from a blog post. I'll read your stuff carefully, tell you what's actually working, and give you the kind of honest feedback a slightly older sibling would give.</p>
         </div>
       </div>
@@ -1031,32 +1015,32 @@
       <div class="modal-title" id="modalTitle">Essay Review</div>
       <div class="modal-sub">Pay <strong id="modalPrice"></strong> via your preferred method</div>
 
-      <!-- ZELLE -->
-      <div class="pay-option">
-        <div class="pay-label">
-          <div class="pay-logo zelle">Z</div>
-          Zelle
-        </div>
-        <div class="pay-detail">
-          Send <span id="zelleAmount"></span> to <span>7742449493</span><br>
-          Label: <span id="zelleNote"></span>
-        </div>
-        <div class="zelle-copy">
-          <input type="text" id="zelleNumber" value="7742449493" readonly />
-          <button class="copy-btn" onclick="copyZelle(this)">Copy</button>
-        </div>
-      </div>
-
       <!-- VENMO -->
       <div class="pay-option">
         <div class="pay-label">
           <div class="pay-logo venmo">V</div>
           Venmo
         </div>
-        <div class="pay-detail">
-          Opens Venmo with amount and note pre-filled — just confirm and pay.
+
+        <!-- Mobile: deep link -->
+        <div id="venmoMobile" style="display:none">
+          <div class="pay-detail">
+            Amount: <span id="venmoAmountMobile"></span><br>
+            Note: <span id="venmoNoteMobile"></span>
+          </div>
+          <a class="pay-btn venmo" id="venmoDeepLink" href="#">Open in Venmo</a>
         </div>
-        <a class="pay-btn venmo" id="venmoBtn" href="#" target="_blank">Open in Venmo</a>
+
+        <!-- Desktop: manual instructions -->
+        <div id="venmoDesktop" style="display:none">
+          <div class="pay-detail">
+            <span>1.</span> Open the Venmo app or go to venmo.com<br>
+            <span>2.</span> Search for <span>@arushsharma</span><br>
+            <span>3.</span> Enter amount: <span id="venmoAmountDesktop"></span><br>
+            <span>4.</span> Add note: <span id="venmoNoteDesktop"></span>
+          </div>
+          <a class="pay-btn venmo" href="https://venmo.com/arushsharma" target="_blank">Open Venmo Web</a>
+        </div>
       </div>
 
       <!-- PAYPAL -->
@@ -1066,7 +1050,7 @@
           PayPal
         </div>
         <div class="pay-detail">
-          Opens a pre-filled PayPal payment page — just review and confirm.
+          Opens a pre-filled PayPal payment page. Works on desktop and mobile.
         </div>
         <a class="pay-btn paypal" id="paypalBtn" href="#" target="_blank">Open PayPal</a>
       </div>
@@ -1074,15 +1058,30 @@
   </div>
 
   <script>
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    }
+
     function openModal(service, price) {
+      const note = service + ' - Peer Path';
       document.getElementById('modalTitle').textContent = service;
       document.getElementById('modalPrice').textContent = '$' + price;
-      document.getElementById('zelleAmount').textContent = '$' + price;
-      document.getElementById('zelleNote').textContent = service + ' - Peer Path';
-      document.getElementById('venmoBtn').href =
-        'venmo://paycharge?txn=pay&recipients=arushsharma&amount=' + price + '&note=' + encodeURIComponent(service + ' - Peer Path');
+      if (isMobile()) {
+        document.getElementById('venmoMobile').style.display = 'block';
+        document.getElementById('venmoDesktop').style.display = 'none';
+        document.getElementById('venmoAmountMobile').textContent = '$' + price;
+        document.getElementById('venmoNoteMobile').textContent = note;
+        document.getElementById('venmoDeepLink').href =
+          'venmo://paycharge?txn=pay&recipients=arushsharma&amount=' + price + '&note=' + encodeURIComponent(note);
+      } else {
+        document.getElementById('venmoDesktop').style.display = 'block';
+        document.getElementById('venmoMobile').style.display = 'none';
+        document.getElementById('venmoAmountDesktop').textContent = '$' + price;
+        document.getElementById('venmoNoteDesktop').textContent = note;
+      }
+
       document.getElementById('paypalBtn').href =
-        'https://paypal.me/arushsharma0320/' + price;
+        'https://paypal.me/arushsharma2006/' + price;
       document.getElementById('modalOverlay').classList.add('open');
       document.body.style.overflow = 'hidden';
     }
@@ -1096,13 +1095,6 @@
       if (e.target === document.getElementById('modalOverlay')) closeModal();
     }
 
-    function copyZelle(btn) {
-      navigator.clipboard.writeText('7742449493').then(() => {
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-      });
-    }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
